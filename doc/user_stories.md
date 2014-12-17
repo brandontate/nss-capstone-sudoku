@@ -31,7 +31,7 @@ User Stories
 ####Timer Off
 
 * I want to be able to remove the timer
-* In order to play an not worry about how long it took me
+* In order to play and not worry about how long it took me
 
 ####Solver Mode
 
