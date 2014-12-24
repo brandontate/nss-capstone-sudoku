@@ -12,16 +12,29 @@ var insertBoard = [
 [2, 8, 7, 4, 1, 9, 6, 3, 5],
 [3, 4, 5, 2, 8, 6, 1, 7, 9]
 ]
-
 var smallSudokuBoard = [
 [0,0,0,0],
 [0,0,0,0],
 [0,0,0,0],
 [0,0,0,0]
 ];
+var win = new Audio('audio/Victory.mp3');
+
+
+function deleteSudokuBoard(){
+  $('table').remove();
+  createSmallSudokuBoard();
+}
 
 
 function createSmallSudokuBoard(){
+  smallSudokuBoard = [
+  [0,0,0,0],
+  [0,0,0,0],
+  [0,0,0,0],
+  [0,0,0,0]
+  ];
+
   var body = document.body;
   var sudokuTable = document.getElementById('sudoku-game-board');
   var tbl  = document.createElement('table');
@@ -53,7 +66,6 @@ function validateSmallSudoku(row, column, value, quadrant, input){
   if (validateRow(row, column, value) === true) {
     if (validateColumn(row, column, value) === true) {
       if (validateSubSection(row, column, value, quadrant, input) === true) {
-
       return true;
       }
     }
@@ -77,6 +89,7 @@ function smallMatrixInsert(input){
           $(input).removeClass("false-input");
           $(input).addClass("valid-input");
           if(findEmptyValues() === 0 && findInvalidValues() === 0) {
+            win.play();
             alert("You have solved the puzzle!");
           }
         } else {
@@ -102,13 +115,12 @@ function findInvalidValues(){
   return $('.false-input').length;
 }
 
-
 function deleteDetector(input) {
   var key = event.keyCode || event.charCode;
   var row = input.getAttribute('row');
   var column = input.getAttribute('column');
   console.log("key pressed")
-  if ( key == 32 && testNumbers.indexOf(guess) === -1) {
+  if ( key == 32 && testNumbers.indexOf(input.value) === -1) {
     input.value = "";
   }
   console.log("key pressed")
