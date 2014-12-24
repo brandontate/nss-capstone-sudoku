@@ -23,6 +23,7 @@ var smallSudokuBoard = [
 
 function createSmallSudokuBoard(){
   var body = document.body;
+  var sudokuTable = document.getElementById('sudoku-game-board');
   var tbl  = document.createElement('table');
   //tbl.setAttribute('onkeypress','validateSmallSudoku();');
   var actualSectionID = 0;
@@ -32,6 +33,7 @@ function createSmallSudokuBoard(){
       var td = tr.insertCell();
       var tdInput = td.appendChild(document.createElement('input'));
       tdInput.setAttribute('onkeyup','smallMatrixInsert(this);');
+      tdInput.setAttribute('onkeydown','deleteDetector(this);');
       tdInput.setAttribute('maxlength','1');
       tdInput.setAttribute('row','' + i);
       tdInput.setAttribute('column','' + j);
@@ -43,27 +45,135 @@ function createSmallSudokuBoard(){
       td.appendChild(document.createTextNode(''));
     }
   }
-  body.appendChild(tbl);
+  sudokuTable.appendChild(tbl);
   colorSection();
 }
 
-function validateSmallSudoku(){
-  if(validateRow() && validateRow() && validateRow() !== true) {
+function validateSmallSudoku(row, column, value, quadrant, input){
+  if (validateRow(row, column, value) === true) {
+    if (validateColumn(row, column, value) === true) {
+      if (validateSubSection(row, column, value, quadrant, input) === true) {
 
-  } else {
-    alert("You have solved the puzzle!");
+      return true;
+      }
+    }
   }
 }
 
-function validateRow(row, column){
+function smallMatrixInsert(input){
+  var guess = parseInt(input.value);
+  var row = input.getAttribute('row');
+  var column = input.getAttribute('column');
+  var quadrant = input.getAttribute('quadrant');
+  if (testNumbers.indexOf(guess) === -1) {
+    input.value = "";
+  } else if (input.value === "") {
+    smallSudokuBoard[row][column] = 0;
+  } else if (guess === smallSudokuBoard[row][column]) {
+    smallSudokuBoard[row][column] = guess
+  } else {
+      if(validateSmallSudoku(row, column, guess, quadrant, input) === true) {
+          smallSudokuBoard[row][column] = guess;
+          $(input).removeClass("false-input");
+          $(input).addClass("valid-input");
+          if(findEmptyValues() === 0 && findInvalidValues() === 0) {
+            alert("You have solved the puzzle!");
+          }
+        } else {
+          smallSudokuBoard[row][column] = guess
+          $(input).removeClass("valid-input");
+          $(input).addClass("false-input");
+        }
+    }
+  emptyCellColor(row, column, input);
+  findEmptyValues();
+  findInvalidValues();
 }
 
-function validateColumn(row, column){
 
+function emptyCellColor(row, column, input){
+  if(smallSudokuBoard[row][column] === 0 || smallSudokuBoard[row][column] === "") {
+    $(input).removeClass("valid-input");
+    $(input).removeClass("false-input");
+  }
 }
 
-function validateSubSection(row, column){
+function findInvalidValues(){
+  return $('.false-input').length;
+}
 
+
+function deleteDetector(input) {
+  var key = event.keyCode || event.charCode;
+  var row = input.getAttribute('row');
+  var column = input.getAttribute('column');
+  console.log("key pressed")
+  if ( key == 32 && testNumbers.indexOf(guess) === -1) {
+    input.value = "";
+  }
+  console.log("key pressed")
+  if( key == 8 || key == 46 ){
+    console.log("backspace pressed")
+    smallSudokuBoard[row][column] = 0;
+    $(input).removeClass("valid-input");
+    $(input).removeClass("false-input");
+  }
+}
+
+function findEmptyValues(){
+  var emptyCells = 0;
+  for(var i = 0; i < 4; i++){
+    for(var j = 0; j < 4; j++){
+      if(smallSudokuBoard[i][j] === 0 || smallSudokuBoard[i][j] === "") {
+        emptyCells++;
+      }
+    }
+  }
+  return emptyCells
+}
+
+function validateRow(row, column, value){
+  var position = [row, column];
+  for (column = 0; column < testNumbers.length; column++) {
+    if(position !== [row, column]) {
+      if(value === smallSudokuBoard[row][column]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function validateColumn(row, column, value){
+  var position = [row, column];
+  for (row = 0; row < testNumbers.length; row++) {
+    if(position !== [row, column]) {
+      if(value === smallSudokuBoard[row][column]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function validateSubSection(row, column, value, quadrant, input){
+  var position = [row, column];
+  for(var i = 0; i < 4; i++){
+    for(var j = 0; j < 4; j++){
+      var a = '[row=\"' + i +'\"]';
+      var b = '[column=\"' + j +'\"]';
+      var c = '[quadrant=\"' + quadrant +'\"]';
+      if (position !== [i, j]) {
+        var inputSelected = $('input' + a + b + c);
+        if (inputSelected.length === 1){
+          if (value === smallSudokuBoard[i][j]) {
+            return false;
+          }
+        }
+      }
+    }
+  }
+  return true;
 }
 
 function subSectionCreator(row, column, cb) {
@@ -112,18 +222,6 @@ function insertTest(){
         var column = '[column=\"' + j +'\"]'
         $('input' + row + column).val(insertBoard[i][j])
       }
-  }
-}
-
-function smallMatrixInsert(input){
-  var guess = parseInt(input.value);
-  var row = input.getAttribute('row');
-  var column = input.getAttribute('column');
-  debugger;
-  if (testNumbers.indexOf(guess) === -1) {
-    input.value = "";
-  } else {
-  smallSudokuBoard[row][column] = guess;
   }
 }
 
