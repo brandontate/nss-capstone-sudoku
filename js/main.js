@@ -110,7 +110,6 @@ var guesses = [];
 
 function smallMatrixInsert(input){
   guesses = [];
-  debugger;
   if (testNumbers.indexOf(parseInt(input.value)) === -1) {
       input.value = "";
       sudokuValidator(input);
@@ -130,10 +129,10 @@ function sudokuValidator(input){
     var guessedRow = guesses[i][0];
     var guessedColumn = guesses[i][1];
     var guessedValue = guesses[i][2];
-    var guessedQuadrant = guesses[i][3]
-    var selectedCell = $('input' + '[row=\"' + guessedRow +'\"]' + '[column=\"' + guessedColumn +'\"]')
+    var guessedQuadrant = guesses[i][3];
+    var selectedCell = $('input' + '[row=\"' + guessedRow +'\"]' + '[column=\"' + guessedColumn +'\"]');
+    debugger;
     if(guessedValue !== "" && isNaN(guessedValue) !== true){
-      debugger;
       if(validateSmallSudoku(guessedRow, guessedColumn, guessedValue, guessedQuadrant) === true) {
         smallSudokuBoard[guessedRow][guessedColumn] = guessedValue;
         selectedCell.removeClass("false-input");
@@ -202,7 +201,7 @@ var validateRow = function (row, column, value){
   debugger;
   var position = [row, column];
   for (column = 0; column < testNumbers.length; column++) {
-    if(position[0] !== row && position[1] !== column) {
+    if(position[1] !== column) {
       if(value === smallSudokuBoard[row][column]) {
         return false;
       }
@@ -212,9 +211,10 @@ var validateRow = function (row, column, value){
 }
 
 var validateColumn = function (row, column, value){
+  debugger;
   var position = [row, column];
   for (row = 0; row < testNumbers.length; row++) {
-    if(position[0] !== row && position[1] !== column) {
+    if(position[0] !== row) {
       if(value === smallSudokuBoard[row][column]) {
         return false;
       }
