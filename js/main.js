@@ -159,13 +159,17 @@ function emptyCellColor(row, column, input){
 }
 
 function findInvalidValues(array){
-  for (i = 0; i < $('.false-input').length; i++) {
-    var guess = parseInt($('.false-input')[i].value);
-    var row = parseInt($('.false-input')[i].getAttribute('row'));
-    var column = parseInt($('.false-input')[i].getAttribute('column'));
-    var quadrant = parseInt($('.false-input')[i].getAttribute('quadrant'));
-    array.push([row, column, guess, quadrant]);
-    return array;
+  if ($('.false-input').length !== 0) {
+    for (i = 0; i < $('.false-input').length; i++) {
+      var guess = parseInt($('.false-input')[i].value);
+      var row = parseInt($('.false-input')[i].getAttribute('row'));
+      var column = parseInt($('.false-input')[i].getAttribute('column'));
+      var quadrant = parseInt($('.false-input')[i].getAttribute('quadrant'));
+      array.push([row, column, guess, quadrant]);
+      return array;
+    }
+  } else {
+    return $('.false-input').length;
   }
 }
 
