@@ -58,7 +58,6 @@ function createSmallSudokuBoard(){
       tdInput.setAttribute('maxlength','1');
       tdInput.setAttribute('row','' + i);
       tdInput.setAttribute('column','' + j);
-      debugger;
       var rowID = Math.floor(i / Math.sqrt(size));
       var columnID = Math.floor(j / Math.sqrt(size));
       var sectionID = (rowID + columnID) % 2;
@@ -74,7 +73,6 @@ function createSmallSudokuBoard(){
 function reCalculateFalseInput(input) {
   var falseValues = $(".false-input");
   for (i = 0; i < falseValues.length; i++) {
-    debugger;
     var guess = parseInt(falseValues[i].value);
     var row = falseValues[i].getAttribute('row');
     var column = falseValues[i].getAttribute('column');
@@ -108,39 +106,51 @@ var validateSmallSudoku = function (row, column, value, quadrant){
   }
 }
 
+var guesses = [];
+
 function smallMatrixInsert(input){
-  var guess = parseInt(input.value);
-  var row = input.getAttribute('row');
-  var column = input.getAttribute('column');
-  var quadrant = input.getAttribute('quadrant');
-  if (testNumbers.indexOf(guess) === -1) {
-    input.value = "";
-  } else if (input.value === "") {
-    smallSudokuBoard[row][column] = 0;
-  } else if (guess === smallSudokuBoard[row][column]) {
-    smallSudokuBoard[row][column] = guess
+  guesses = [];
+  debugger;
+  if (testNumbers.indexOf(parseInt(input.value)) === -1) {
+      input.value = "";
+      sudokuValidator(input);
   } else {
-    debugger;
-      if(validateSmallSudoku(row, column, guess, quadrant) === true) {
-          smallSudokuBoard[row][column] = guess;
-          $(input).removeClass("false-input");
-          $(input).addClass("valid-input");
-          if(findEmptyValues() === 0 && findInvalidValues() === 0) {
-            win.play();
-            alert("You have solved the puzzle!");
-          }
-        } else {
-          smallSudokuBoard[row][column] = guess
-          $(input).removeClass("valid-input");
-          $(input).addClass("false-input");
-        }
-    }
-  emptyCellColor(row, column, input);
-  findEmptyValues();
-  findInvalidValues();
-  reCalculateFalseInput(input);
+    sudokuValidator(input);
+  }
 }
 
+function sudokuValidator(input){
+  var guess = parseInt(input.value);
+  var row = parseInt(input.getAttribute('row'));
+  var column = parseInt(input.getAttribute('column'));
+  var quadrant = parseInt(input.getAttribute('quadrant'));
+  guesses.push([row, column, guess, quadrant]);
+  findInvalidValues(guesses);
+  for (i = 0; i < guesses.length; i++) {
+    var guessedRow = guesses[i][0];
+    var guessedColumn = guesses[i][1];
+    var guessedValue = guesses[i][2];
+    var guessedQuadrant = guesses[i][3]
+    var selectedCell = $('input' + '[row=\"' + guessedRow +'\"]' + '[column=\"' + guessedColumn +'\"]')
+    if(guessedValue !== "" && isNaN(guessedValue) !== true){
+      debugger;
+      if(validateSmallSudoku(guessedRow, guessedColumn, guessedValue, guessedQuadrant) === true) {
+        smallSudokuBoard[guessedRow][guessedColumn] = guessedValue;
+        selectedCell.removeClass("false-input");
+        selectedCell.addClass("valid-input");
+        if(findEmptyValues() === 0 && findInvalidValues() === 0) {
+          win.play();
+          alert("You have solved the puzzle!");
+        }
+      } else {
+        smallSudokuBoard[guessedRow][guessedColumn] = guessedValue;
+        selectedCell.removeClass("valid-input");
+        selectedCell.addClass("false-input");
+      }
+    }
+  }
+  emptyCellColor(row, column, input);
+}
 
 function emptyCellColor(row, column, input){
   if(smallSudokuBoard[row][column] === 0 || smallSudokuBoard[row][column] === "") {
@@ -149,8 +159,15 @@ function emptyCellColor(row, column, input){
   }
 }
 
-function findInvalidValues(){
-  return $('.false-input').length;
+function findInvalidValues(array){
+  for (i = 0; i < $('.false-input').length; i++) {
+    var guess = parseInt($('.false-input')[i].value);
+    var row = parseInt($('.false-input')[i].getAttribute('row'));
+    var column = parseInt($('.false-input')[i].getAttribute('column'));
+    var quadrant = parseInt($('.false-input')[i].getAttribute('quadrant'));
+    array.push([row, column, guess, quadrant]);
+    return array;
+  }
 }
 
 function deleteDetector(input) {
@@ -169,7 +186,6 @@ function deleteDetector(input) {
     $(input).removeClass("false-input");
   }
 }
-
 function findEmptyValues(){
   var emptyCells = 0;
   for(var i = 0; i < 4; i++){
@@ -183,9 +199,10 @@ function findEmptyValues(){
 }
 
 var validateRow = function (row, column, value){
+  debugger;
   var position = [row, column];
   for (column = 0; column < testNumbers.length; column++) {
-    if(position !== [row, column]) {
+    if(position[0] !== row && position[1] !== column) {
       if(value === smallSudokuBoard[row][column]) {
         return false;
       }
@@ -197,7 +214,7 @@ var validateRow = function (row, column, value){
 var validateColumn = function (row, column, value){
   var position = [row, column];
   for (row = 0; row < testNumbers.length; row++) {
-    if(position !== [row, column]) {
+    if(position[0] !== row && position[1] !== column) {
       if(value === smallSudokuBoard[row][column]) {
         return false;
       }
@@ -213,7 +230,7 @@ var validateSubSection = function (row, column, value, quadrant){
       var a = '[row=\"' + i +'\"]';
       var b = '[column=\"' + j +'\"]';
       var c = '[quadrant=\"' + quadrant +'\"]';
-      if (position !== [i, j]) {
+      if (position[0] !== i && position[1] !== j) {
         var inputSelected = $('input' + a + b + c);
         if (inputSelected.length === 1){
           if (value === smallSudokuBoard[i][j]) {
@@ -298,30 +315,6 @@ function insertTest(){
         $('input' + row + column).val(insertBoard[i][j])
       }
   }
-}
-
-function createSudokuBoard(){
-  var body = document.body;
-  var tbl  = document.createElement('table');
-  var actualSectionID = 0;
-  for(var i = 0; i < 9; i++){
-    var tr = tbl.insertRow();
-    for(var j = 0; j < 9; j++){
-        var td = tr.insertCell();
-        var tdInput = td.appendChild(document.createElement('input'));
-        tdInput;
-        tdInput.setAttribute('maxlength','1');
-        tdInput.setAttribute('row','' + i);
-        tdInput.setAttribute('column','' + j);
-        var rowID = Math.floor(i / 3);
-        var columnID = Math.floor(j / 3);
-        var sectionID = (rowID + columnID) % 2;
-        tdInput.setAttribute('section','' + sectionID);
-        td.appendChild(document.createTextNode(''));
-      }
-    }
-  body.appendChild(tbl);
-  colorSection();
 }
 
 function colorSection(){
