@@ -14,14 +14,6 @@ table td input {
   text-align: center;
 }
 
-.even-section {
-  background-color: white;
-}
-
-.odd-section {
-  background-color: lightgrey;
-}
-
 input {
   margin: 0px;
   padding: 0px;
@@ -31,9 +23,17 @@ input {
 }
 
 .false-input{
-  background-color: pink;
+  background-color: pink !important;
 }
 
 .valid-input{
-  background-color: lightgreen;
+  background-color: lightgreen !important;
+}
+
+input[section='0'] {
+  background-color: white;
+}
+
+input[section='1'] {
+  background-color: lightgrey;
 }
