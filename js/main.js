@@ -14,6 +14,18 @@ var insertBoard = [
 var smallSudokuBoard = [];
 var win = new Audio('audio/Victory.mp3');
 
+var puzzle69 = [
+[0, 0, 4, 0, 0, 7, 0, 0, 0],
+[0, 0, 0, 0, 0, 3, 7, 0, 1],
+[0, 9, 0, 0, 1, 0, 0, 0, 8],
+[0, 8, 6, 0, 0, 0, 3, 0, 0],
+[0, 0, 0, 5, 6, 4, 0, 0, 0],
+[0, 0, 2, 0, 0, 0, 9, 7, 0],
+[2, 0, 0, 0, 4, 0, 0, 9, 0],
+[9, 0, 1, 7, 0, 0, 0, 0, 0],
+[0, 0, 0, 2, 0, 0, 5, 0, 0]
+]
+
 function deleteSudokuBoard(){
   $('table').remove();
   createSmallSudokuBoard();
@@ -91,14 +103,24 @@ function smallMatrixInsert(input){
   }
 }
 
+function insertPuzzle(matrix){
+  var $input, value;
+  for ( g = 0; g < matrix.length; g++){
+    for ( h = 0; h < matrix.length; h++){
+      debugger;
+      $input = $('input' + '[row=\"' + g +'\"]' + '[column=\"' + h +'\"]')[0];
+      $input.value = matrix[g][h];
+      smallMatrixInsert($input);
+    }
+  }
+}
+
 function sudokuValidator(input){
-  debugger;
   var guess = parseInt(input.value);
   var row = parseInt(input.getAttribute('row'));
   var column = parseInt(input.getAttribute('column'));
   var quadrant = parseInt(input.getAttribute('quadrant'));
   guesses.push([row, column, guess, quadrant]);
-  findInvalidValues(guesses);
   for (i = 0; i < guesses.length; i++) {
     var guessedRow = guesses[i][0];
     var guessedColumn = guesses[i][1];
@@ -121,6 +143,9 @@ function sudokuValidator(input){
       }
    }
   }
+  if($('.false-input').length !== 0){
+    reCheckOldFalseValues();
+  }
   emptyCellColor(row, column, input);
 }
 
@@ -128,6 +153,32 @@ function emptyCellColor(row, column, input){
   if(smallSudokuBoard[row][column] === 0 || smallSudokuBoard[row][column] === "") {
     $(input).removeClass("valid-input");
     $(input).removeClass("false-input");
+  }
+}
+
+function reCheckOldFalseValues(){
+  var value, row, column, quadrant, selectedCell;
+  for (oldCells = 0; oldCells < $('.false-input').length; oldCells++) {
+    value = parseInt($('.false-input')[oldCells].value);
+    row = parseInt($('.false-input')[oldCells].getAttribute('row'));
+    column = parseInt($('.false-input')[oldCells].getAttribute('column'));
+    quadrant = parseInt($('.false-input')[oldCells].getAttribute('quadrant'));
+    selectedCell = $('input' + '[row=\"' + row +'\"]' + '[column=\"' + column +'\"]');
+    if(value !== "" && isNaN(value) !== true){
+      if(validateSmallSudoku(row, column, value, quadrant) === true) {
+        smallSudokuBoard[row][column] = value;
+        selectedCell.removeClass("false-input");
+        selectedCell.addClass("valid-input");
+        if(emptyAreas().length === 0 && findInvalidValues() === 0) {
+          win.play();
+          alert("You have solved the puzzle!");
+        }
+      } else {
+        smallSudokuBoard[row][column] = value;
+        selectedCell.removeClass("valid-input");
+        selectedCell.addClass("false-input");
+      }
+    }
   }
 }
 
@@ -148,8 +199,9 @@ function findInvalidValues(array){
 
 function deleteDetector(input) {
   var key = event.keyCode || event.charCode;
-  var row = input.getAttribute('row');
-  var column = input.getAttribute('column');
+  var row = parseInt(input.getAttribute('row'));
+  var column = parseInt(input.getAttribute('column'));
+  var quadrant = parseInt(input.getAttribute('quadrant'));
   console.log("key pressed")
   if ( key == 32 && testNumbers.indexOf(input.value) === -1) {
     input.value = "";
@@ -261,105 +313,294 @@ function emptyAreas(){
   return areas;
 }
 
-function sudokuSolver(){
-  debugger;
-  var emptyCells = emptyAreas().length;
-  var randomGuesses = emptyAreas();
-  var numbersToPickFrom = testNumbers.slice(0);
-  do {
-    for (a = 0; a < emptyCells; a++){
-      var position = randomGuesses[a]
-      var randomValue = numbersToPickFrom[Math.floor(Math.random() * numbersToPickFrom.length)];
-      var row = position[0];
-      var column = position[1];
-      var quadrant = parseInt($('input' + '[row=\"' + row +'\"]' + '[column=\"' + column +'\"]')[0].getAttribute('quadrant'));
-      var $input = $('input' + '[row=\"' + row +'\"]' + '[column=\"' + column +'\"]')[0]
-      $input.value = randomValue;
-      smallMatrixInsert($input);
-        if ($('.false-input').length !== 0){
-          a--;
-          $input.value = "";
-          smallSudokuBoard[row][column] = 0;
-          smallMatrixInsert($input);
-          numbersToPickFrom.splice(numbersToPickFrom.indexOf(randomValue) ,1);
-          randomValue = numbersToPickFrom[Math.floor(Math.random() * numbersToPickFrom.length)];
-          if (numbersToPickFrom.length === 0){
-            //clearboard
-            var numberOfSolved = $('input[solver=yes]');
-            do {
-              debugger;
-              numberOfSolved[0].value = "";
-              var rowToDelete = numberOfSolved[0].getAttribute('row');
-              var columnToDelete = numberOfSolved[0].getAttribute('column');
-              smallSudokuBoard[rowToDelete][columnToDelete] = 0;
-              numberOfSolved[0].removeAttribute('solver');
-              emptyCellColor(rowToDelete, columnToDelete, numberOfSolved[0]);
-              numberOfSolved.splice(0,1);
-            }
-            while (numberOfSolved.length !== 0);
-            a = -1;
-            numbersToPickFrom = testNumbers.slice(0);
-          }
-        } else {
-          numbersToPickFrom = testNumbers.slice(0);
-          $input.setAttribute('solver','yes');
-        }
+function emptyLocations(){
+  var areas = {};
+  for(var i = 0; i < smallSudokuBoard.length; i++) {
+    for(var j = 0; j < smallSudokuBoard.length; j++) {
+      if (smallSudokuBoard[i][j] === 0) {
+        areas.row = i, areas.column = j, areas.guesses = [];
+      }
     }
   }
-    while (emptyAreas().length !== 0);
+  return areas;
 }
 
+function solveCurrentCell(row, column, options){
+  // var position = array[index];
+  // var row = position[0];
+  // var column = position[1];
+  var $input = $('input' + '[row=\"' + row +'\"]' + '[column=\"' + column +'\"]')[0]
+  var quadrant = parseInt($input.getAttribute('quadrant'));
+  if ($input.value !== ""){
+    // unsolvedSquares.guesses.push($input.value);
+    options.splice(options.indexOf(parseInt($input.value)), 1);
+    $input.value = "";
+    smallSudokuBoard[row][column] = 0;
+    smallMatrixInsert($input);
+  }
+  checkPossibleValues(row, column, quadrant, options);
+  var randomValue = options[Math.floor(Math.random() * options.length)];
+  $input.value = randomValue;
+  smallMatrixInsert($input);
+      // unsolvedSquares.guesses.push(randomValue);
+      if (options.length === 0){
+        //clear the old value from the board and input box
+        $input.value = "";
+        smallSudokuBoard[row][column] = 0;
+        smallMatrixInsert($input);
+        //remove the previous guess from the list of available numbers
+        options.splice(options.indexOf(randomValue), 1);
+        return false;
+      }
+  $input.setAttribute('solver','yes');
+  return true;
+}
+
+function checkPossibleValues(row, column, quadrant, array){
+  var rowArray = $('input' + '[row=\"' + row +'\"]');
+  for (i = 0; i < rowArray.length; i++) {
+    if(parseInt(rowArray[i].getAttribute('column')) !== column) {
+      if(array.indexOf(parseInt(smallSudokuBoard[row][i])) !== -1) {
+        array.splice(array.indexOf(parseInt(smallSudokuBoard[row][i])), 1);
+      }
+    }
+  }
+
+  var columnArray = $('input' + '[column=\"' + column +'\"]');
+  for (i = 0; i < testNumbers.length; i++) {
+    if(parseInt(columnArray[i].getAttribute('row')) !== row) {
+      if(array.indexOf(parseInt(smallSudokuBoard[i][column])) !== -1) {
+        array.splice(array.indexOf(parseInt(smallSudokuBoard[i][column])), 1);
+      }
+    }
+  }
+
+  var quadrantArray = $('input' + '[quadrant=\"' + quadrant +'\"]');
+  for (i = 0; i < quadrantArray.length; i++) {
+    var position = [parseInt(quadrantArray[i].getAttribute('row')), parseInt(quadrantArray[i].getAttribute('column'))];
+    if(position[0] !== row || position[1] !== column) {
+      if(array.indexOf(parseInt(quadrantArray[i].value)) !== -1) {
+        array.splice(array.indexOf(parseInt(quadrantArray[i].value)), 1);
+      }
+    }
+  }
+  return array;
+}
 
 // function sudokuSolver(){
-//   var randomGuesses = []
-//   var numbersToPickFrom = testNumbers;
-//   var emptyCells = findEmptyValues();
-//   for (i = 0; i < emptyCells; i++){
-//     numbersToPickFrom = testNumbers;
-//     var randomValue = numbersToPickFrom[Math.floor(Math.random() * numbersToPickFrom.length)];
-//     var randomRow = Math.floor(Math.random() * testNumbers.length);
-//     var randomColumn = Math.floor(Math.random() * testNumbers.length);
-//     var randomQuadrant = parseInt($('input' + '[row=\"' + randomRow +'\"]' + '[column=\"' + randomColumn +'\"]')[0].getAttribute('quadrant'));
-//     debugger;
-//     if (smallSudokuBoard[randomRow][randomColumn] === 0) {
-//       if(validateSmallSudoku(randomRow, randomColumn, randomValue, randomQuadrant) === true){
-//         randomGuesses.push([randomRow, randomColumn, randomValue, randomQuadrant]);
-//         smallSudokuBoard[randomRow][randomColumn] = randomValue;
-//         $('input' + '[row=\"' + randomRow +'\"]' + '[column=\"' + randomColumn +'\"]').val(randomValue);
-//       } else {
-//         do {
+//   // var unsolvedSquares = emptyLocations();
+//   var emptyCells = emptyAreas().length;
+//   var numbersToPickFrom = testNumbers.slice(0);
+//   var randomGuesses = emptyAreas();
+//   var clearBoard = 0;
+//   do {
+//     for (a = 0; a < emptyCells; a++){
+//       if (solveCurrentCell(a, randomGuesses, numbersToPickFrom) !== true){
+//         a = a - 2;
+//         var numberOfCellsToRemove = 0;
+//         if ($('input[solver=yes]').length <= 9){
+//           do {
+//             var numberOfSolved = $('input[solver=yes]');
+//             debugger;
+//             numberOfSolved[numberOfSolved.length - 1].value = "";
+//             var rowToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('row');
+//             var columnToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('column');
+//             smallSudokuBoard[rowToDelete][columnToDelete] = 0;
+//             numberOfSolved[numberOfSolved.length - 1].removeAttribute('solver');
+//             emptyCellColor(rowToDelete, columnToDelete, numberOfSolved[numberOfSolved.length - 1]);
+//             numberOfSolved.splice((numberOfSolved.length - 1),1);
+//           }
+//           while (numberOfSolved.length !== 0);
+//           numberOfCellsToRemove = 0;
+//           a = -1;
+//         }
 //
+//         if ($('input[solver=yes]').length > 9){
+//           clearBoard++;
+//           if(clearBoard === 100 || clearBoard === 200 || clearBoard === 300 && emptyCells >= 9) {
+//             do {
+//               debugger
+//               var numberOfSolved = $('input[solver=yes]');
+//               numberOfSolved[numberOfSolved.length - 1].value = "";
+//               var rowToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('row');
+//               var columnToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('column');
+//               smallSudokuBoard[rowToDelete][columnToDelete] = 0;
+//               numberOfSolved[numberOfSolved.length - 1].removeAttribute('solver');
+//               emptyCellColor(rowToDelete, columnToDelete, numberOfSolved[numberOfSolved.length - 1]);
+//               numberOfSolved.splice((numberOfSolved.length - 1),1);
+//               numberOfCellsToRemove++
+//             }
+//             while (numberOfCellsToRemove !== 8);
+//             if (a <= 9) {
+//               a = -1;
+//             } else {
+//               a = a - 7;
+//             }
+//             numberOfCellsToRemove = 0;
+//           } else if (clearBoard === 400) {
+//             do {
+//               var numberOfSolved = $('input[solver=yes]');
+//               debugger;
+//               numberOfSolved[numberOfSolved.length - 1].value = "";
+//               var rowToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('row');
+//               var columnToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('column');
+//               smallSudokuBoard[rowToDelete][columnToDelete] = 0;
+//               numberOfSolved[numberOfSolved.length - 1].removeAttribute('solver');
+//               emptyCellColor(rowToDelete, columnToDelete, numberOfSolved[numberOfSolved.length - 1]);
+//               numberOfSolved.splice((numberOfSolved.length - 1),1);
+//             }
+//             while (numberOfSolved.length !== 0);
+//             numberOfCellsToRemove = 0;
+//             a = -1;
+//             clearBoard = 0;
+//           }
 //         }
-//         while (validateSmallSudoku(randomRow, randomColumn, randomValue, randomQuadrant) === false);
-//         randomGuesses.push([randomRow, randomColumn, randomValue, randomQuadrant]);
-//         smallSudokuBoard[randomRow][randomColumn] = randomValue;
-//         $('input' + '[row=\"' + randomRow +'\"]' + '[column=\"' + randomColumn +'\"]').val(randomValue);
 //       }
-//     } else {
-//       do {
-//         randomRow = Math.floor(Math.random() * testNumbers.length);
-//         randomColumn = Math.floor(Math.random() * testNumbers.length);
-//         randomQuadrant = parseInt($('input' + '[row=\"' + randomRow +'\"]' + '[column=\"' + randomColumn +'\"]')[0].getAttribute('quadrant'));
-//       }
-//       while(smallSudokuBoard[randomRow][randomColumn] !== 0);
-//       if(validateSmallSudoku(randomRow, randomColumn, randomValue, randomQuadrant) === true){
-//         randomGuesses.push([randomRow, randomColumn, randomValue, randomQuadrant]);
-//         smallSudokuBoard[randomRow][randomColumn] = randomValue;
-//         $('input' + '[row=\"' + randomRow +'\"]' + '[column=\"' + randomColumn +'\"]').val(randomValue);
-//       } else {
-//         do {
-//           numbersToPickFrom.splice(numbersToPickFrom.indexOf(randomValue) ,1);
-//           randomValue = numbersToPickFrom[Math.floor(Math.random() * numbersToPickFrom.length)];
-//         }
-//         while (validateSmallSudoku(randomRow, randomColumn, randomValue, randomQuadrant) === false);
-//         randomGuesses.push([randomRow, randomColumn, randomValue, randomQuadrant]);
-//         smallSudokuBoard[randomRow][randomColumn] = randomValue;
-//         $('input' + '[row=\"' + randomRow +'\"]' + '[column=\"' + randomColumn +'\"]').val(randomValue);
-//       }
+//       numbersToPickFrom = testNumbers.slice(0);
 //     }
 //   }
-//   numbersToPickFrom = testNumbers;
+//   while (emptyAreas().length !== 0);
 // }
+
+function findLeastAmountOfValid(){
+  var position, row, column, $input, quadrant, arrayofValidEntries, numbersToPickFrom;
+  var areasToTryFirst = [];
+  for (z=0; z < emptyAreas().length; z++){
+    numbersToPickFrom = testNumbers.slice(0);
+    position = emptyAreas()[z];
+    row = position[0];
+    column = position[1];
+    $input = $('input' + '[row=\"' + row +'\"]' + '[column=\"' + column +'\"]')[0]
+    quadrant = parseInt($input.getAttribute('quadrant'));
+    arrayofValidEntries = checkPossibleValues(row, column, quadrant, numbersToPickFrom);
+    areasToTryFirst.push({ "row": row, "column": column, "valid": arrayofValidEntries });
+  }
+  return areasToTryFirst;
+}
+
+function sudokuSolver(){
+  var position, row, column, $input, quadrant, arrayofValidEntries, validOptions,
+  numbersToPickFrom, cellsToTry, previousRow, previousColumn, previousQuadrant;
+  var areasToTryFirst = [];
+  var previousCell = [];
+  var previousValue = 0;
+  var clearBoard = 0;
+  do {
+    cellsToTry = 0;
+    cellsToTry = findLeastAmountOfValid();
+    debugger;
+    currentCell = findShortValid(cellsToTry);
+    if(currentCell.valid.length !== 0){
+      row = currentCell.row;
+      column = currentCell.column;
+      validOptions = currentCell.valid;
+      if(previousValue !== 0){
+        validOptions.splice(validOptions.indexOf(previousValue), 1);
+      }
+      if(validOptions.length !== 0){
+        solveCurrentCell(row, column, validOptions);
+        previousCell.push(currentCell);
+      } else {
+        do {
+            previousRow = previousCell[previousCell.length-1].row;
+            previousColumn = previousCell[previousCell.length-1].column;
+            $input = $('input' + '[row=\"' + previousRow +'\"]' + '[column=\"' + previousColumn +'\"]')[0];
+            previousQuadrant = $input.getAttribute('quadrant');
+            previousValue = parseInt($input.value);
+            $input.value = "";
+            smallSudokuBoard[previousRow][previousColumn] = 0;
+            emptyCellColor(previousRow, previousColumn, $input);
+            previousCell.splice((previousCell.length - 1), 1);
+            clearBoard++;
+            if (clearBoard === 15) {
+              do {
+                var numberOfSolved = $('input[solver=yes]');
+                debugger;
+                numberOfSolved[numberOfSolved.length - 1].value = "";
+                var rowToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('row');
+                var columnToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('column');
+                smallSudokuBoard[rowToDelete][columnToDelete] = 0;
+                numberOfSolved[numberOfSolved.length - 1].removeAttribute('solver');
+                emptyCellColor(rowToDelete, columnToDelete, numberOfSolved[numberOfSolved.length - 1]);
+                numberOfSolved.splice((numberOfSolved.length - 1),1);
+              }
+              while (numberOfSolved.length !== 0);
+              clearBoard = 0;
+              previousValue = 0;
+              previousCell = [];
+            }
+        } while (currentCell.valid.length !== 0);
+      }
+    } else {
+      //stop here!!!!!!
+      debugger;
+      do {
+        previousRow = previousCell[previousCell.length-1].row;
+        previousColumn = previousCell[previousCell.length-1].column;
+        $input = $('input' + '[row=\"' + previousRow +'\"]' + '[column=\"' + previousColumn +'\"]')[0];
+        previousQuadrant = $input.getAttribute('quadrant');
+        previousValue = parseInt($input.value);
+        $input.value = "";
+        smallSudokuBoard[previousRow][previousColumn] = 0;
+        emptyCellColor(previousRow, previousColumn, $input);
+        previousCell.splice((previousCell.length - 1), 1);
+        clearBoard++;
+        if (clearBoard === 15) {
+          do {
+            var numberOfSolved = $('input[solver=yes]');
+            debugger;
+            numberOfSolved[numberOfSolved.length - 1].value = "";
+            var rowToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('row');
+            var columnToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('column');
+            smallSudokuBoard[rowToDelete][columnToDelete] = 0;
+            numberOfSolved[numberOfSolved.length - 1].removeAttribute('solver');
+            emptyCellColor(rowToDelete, columnToDelete, numberOfSolved[numberOfSolved.length - 1]);
+            numberOfSolved.splice((numberOfSolved.length - 1),1);
+          }
+          while (numberOfSolved.length !== 0);
+          clearBoard = 0;
+          previousValue = 0;
+          previousCell = [];
+        }
+      }
+      while (currentCell.valid.length !== 0);
+    }
+  } while (emptyAreas().length !== 0);
+}
+
+function findShortValid(array){
+  var current, smallest, noValidOptions;
+  debugger;
+  for(oneValid = 0; oneValid < array.length; oneValid++){
+    current = array[oneValid];
+    if(current.valid.length !== 0){
+      if(smallest === undefined){
+        smallest = current;
+      } else if (current.valid.length < smallest.valid.length){
+        smallest = current;
+      }
+    } else {
+      noValidOptions = current;
+    }
+  }
+  if(smallest !== undefined){
+    return smallest;
+  } else {
+    return noValidOptions;
+  }
+
+}
+
+function findCellWithTwoSolutions(array){
+  for(twoValid = 0; twoValid < array.length; twoValid++){
+    if(array[twoValid].valid.length === 2){
+      return array[twoValid];
+    }
+  }
+}
+
+//solveCurrentCell(row, column, options)
+
 
 $(document).ready(function(){
   createSmallSudokuBoard();
