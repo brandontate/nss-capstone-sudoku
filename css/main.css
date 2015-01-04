@@ -1,3 +1,19 @@
+h1{
+  width: 402px;
+  text-align: center;
+}
+
+body {
+  width: 500px;
+  position: fixed;
+  left: 30%;
+}
+
+#sudoku-game-board{
+  display: inline-block;
+}
+
+
 table {
   position: relative;
   border-collapse: collapse;
@@ -14,6 +30,32 @@ table td input {
   text-align: center;
 }
 
+.sudoku-button{
+  padding: 5px;
+  margin: 10px;
+}
+
+.game-options{
+  display: inline-block;
+  float: right;
+  width: 80px;
+  border: 1px solid black;
+}
+
+.rules{
+  width: 402px;
+  border: 1px solid black;
+  margin: 0;
+  padding: 0;
+}
+
+.game-options ul{
+  margin: 0;
+  margin-top: 3px;
+  padding: 0;
+  list-style-type: none;
+}
+
 input {
   margin: 0px;
   padding: 0px;
@@ -22,12 +64,12 @@ input {
   background-color: transparent;
 }
 
-.false-input{
-  background-color: pink !important;
+.false-input {
+  color: red;
 }
 
-.valid-input{
-  background-color: lightgreen !important;
+.valid-input {
+  color: green;
 }
 
 input[section='0'] {
@@ -36,4 +78,12 @@ input[section='0'] {
 
 input[section='1'] {
   background-color: lightgrey;
+}
+
+input[startingNumber='yes'] {
+  color: black;
+}
+
+input[solver='yes'] {
+  color: blue;
 }
