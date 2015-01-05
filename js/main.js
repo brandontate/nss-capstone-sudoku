@@ -63,7 +63,7 @@ function createSmallSudokuBoard(){
       var rowID = Math.floor(i / Math.sqrt(size));
       var columnID = Math.floor(j / Math.sqrt(size));
       var sectionID = (rowID + columnID) % 2;
-      tdInput.setAttribute('section','' + sectionID);
+      td.setAttribute('section','' + sectionID);
       subSectionCreator(size, i, j, tdInput);
       td.appendChild(document.createTextNode(''));
     }
