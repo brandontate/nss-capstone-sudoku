@@ -1,6 +1,7 @@
 html{
   background-color: snow;
 }
+
 h1{
   width: 402px;
   text-align: center;
@@ -16,11 +17,11 @@ body {
   display: inline-block;
 }
 
-
 table {
   position: relative;
   border-collapse: collapse;
 }
+
 table td {
   margin: 0px;
   padding: 0px;
@@ -74,12 +75,15 @@ input[type="button"] {
   background-color: #F8F8F8;
 }
 
-.false-input {
-  box-shadow: inset 0 0 10px red;
+input[type="text"].false-input {
+  border: 1px solid red;
+  box-shadow: inset 0 0 3px red;
+  color: red;
 }
 
-.valid-input {
-  box-shadow: inset 0 0 10px lime;
+input[type="text"].valid-input {
+  border: 1px solid limegreen;
+  box-shadow: inset 0 0 3px limegreen;
 }
 
 td[section='0'] {
@@ -91,16 +95,25 @@ td[section='1'] {
 }
 
 input[startingNumber='yes'] {
-  box-shadow: none;
+  box-shadow: none !important;
   color: black;
-  border: 1px solid black;
+  box-shadow: inset 0 0 3px black !important;
+  border: 1px solid black !important;
 }
 
 input[solver='yes'] {
+  border: 1px solid blue !important;
+  box-shadow: inset 0 0 3px blue !important;
   color: blue;
-  box-shadow: none;
+}
+
+input[corrected='yes'] {
+  border: 1px solid purple !important;
+  box-shadow: inset 0 0 3px purple !important;
+  color: purple;
 }
 
 input[disabled='disabled'] {
   opacity: 1;
+  color: black !important;
 }
