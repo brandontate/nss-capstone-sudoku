@@ -1,4 +1,4 @@
-var testNumbers = [];
+var availableNumbers = [];
 var sudokuBoard = [];
 var win = new Audio('audio/Victory.mp3');
 var guesses;
@@ -20,11 +20,11 @@ function sudokuBoardSize(size) {
 }
 
 function numberInputArray(size) {
-  testNumbers = [];
+  availableNumbers = [];
   for (size; size > 0; size--) {
-    testNumbers.push(size);
+    availableNumbers.push(size);
   }
-  return testNumbers;
+  return availableNumbers;
 }
 
 
@@ -72,7 +72,7 @@ var validateSudoku = function (row, column, value, subsection){
 
 function matrixInsert(input){
   guesses = [];
-  if (testNumbers.indexOf(parseInt(input.value)) === -1) {
+  if (availableNumbers.indexOf(parseInt(input.value)) === -1) {
       input.value = "";
       sudokuValidator(input);
   } else {
@@ -164,7 +164,7 @@ function deleteDetector(input) {
   var column = parseInt(input.getAttribute('column'));
   var subsection = parseInt(input.getAttribute('subsection'));
   console.log("key pressed")
-  if ( key == 32 && testNumbers.indexOf(input.value) === -1) {
+  if ( key == 32 && availableNumbers.indexOf(input.value) === -1) {
     input.value = "";
   }
   console.log("key pressed")
@@ -184,7 +184,7 @@ function findEmptyValues(){
       }
     }
   }
-  return emptyCells
+  return emptyCells;
 }
 
 var validateRow = function (row, column, value){
@@ -309,7 +309,7 @@ function checkPossibleValues(row, column, subsection, array){
   }
 
   var columnArray = $('input' + '[column=\"' + column +'\"]');
-  for (i = 0; i < testNumbers.length; i++) {
+  for (i = 0; i < availableNumbers.length; i++) {
     if(parseInt(columnArray[i].getAttribute('row')) !== row) {
       if(array.indexOf(parseInt(sudokuBoard[i][column])) !== -1) {
         array.splice(array.indexOf(parseInt(sudokuBoard[i][column])), 1);
@@ -333,7 +333,7 @@ function findLeastAmountOfValid(){
   var position, row, column, $input, subsection, arrayofValidEntries, numbersToPickFrom;
   var areasToTryFirst = [];
   for (z=0; z < emptyAreas().length; z++){
-    numbersToPickFrom = testNumbers.slice(0);
+    numbersToPickFrom = availableNumbers.slice(0);
     position = emptyAreas()[z];
     row = position[0];
     column = position[1];
@@ -489,15 +489,17 @@ function checkDifficulty(){
 }
 
 function insertBoard(startingNumbers){
-  var row, column, value, $input, insertValue, testAnswers;
+  var row, column, value, $input, insertValue, testAnswers, index;
+  var emptyPositions = emptyAreas();
   var counter = 0;
   var size = parseInt($('#board-size').val());
   sudokuSolver();
   testAnswers = sudokuBoard;
   deleteSudokuBoard();
   do{
-    row = Math.floor(Math.random() * (size-1));
-    column = Math.floor(Math.random() * (size-1));
+    index = Math.floor(Math.random() * (emptyPositions.length-1));
+    row = emptyPositions[index][0];
+    column = emptyPositions[index][1];
      $input = $('input' + '[row=\"' + row +'\"]' + '[column=\"' + column +'\"]')[0];
     if($input.value === ""){
       $input.value = testAnswers[row][column];
