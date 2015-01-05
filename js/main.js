@@ -44,6 +44,7 @@ function createSudokuBoard(){
       var tdInput = td.appendChild(document.createElement('input'));
       tdInput.type = "text";
       tdInput.setAttribute('onkeyup','matrixInsert(this);');
+      tdInput.setAttribute('onblur','matrixInsert(this);');
       tdInput.setAttribute('onkeydown','deleteDetector(this);');
       tdInput.setAttribute('maxlength','1');
       tdInput.setAttribute('row','' + i);
