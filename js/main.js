@@ -1,7 +1,7 @@
 var availableNumbers = [];
 var sudokuBoard = [];
 var win = new Audio('audio/Victory.mp3');
-var guesses;
+var guesses, solved;
 // var myDataRef = new Firebase('https://nss-sudoku.firebaseio.com/puzzle');
 
 function deleteSudokuBoard(){
@@ -30,6 +30,7 @@ function numberInputArray(size) {
 
 function createSudokuBoard(){
   sudokuBoard = [];
+  solved = false;
   var size = parseInt($('#board-size').val());
   numberInputArray(size);
   sudokuBoardSize(size);
@@ -97,7 +98,8 @@ function sudokuValidator(input){
         sudokuBoard[guessedRow][guessedColumn] = guessedValue;
         selectedCell.removeClass("false-input");
         selectedCell.addClass("valid-input");
-        if($('input[solver=yes]').length === 0 && emptyAreas().length === 0 && findInvalidValues() === 0) {
+        if($('input[solver=yes]').length === 0 && emptyAreas().length === 0 && findInvalidValues() === 0 && solved === false) {
+          solved = true;
           win.play();
           alert("You have solved the puzzle!");
         }
@@ -428,6 +430,7 @@ function sudokuSolver(){
       while (currentCell.valid.length !== 0);
     }
   } while (emptyAreas().length !== 0);
+  solved = true;
 }
 
 function findShortValid(array){
@@ -520,16 +523,18 @@ function createNewGame(){
 
 function findUserInput(){
   var guessed = [];
-  for (var x = 0; x < sudokuBoard.length; x++){
-    for (var y = 0; y < sudokuBoard.length; y++){
-      var $input;
-      $input = $('input' + '[row=\"' + x +'\"]' + '[column=\"' + y +'\"]')[0];
-      if($input.getAttribute('startingNumber') !== 'yes'){
-        if($input.value !== ""){
-          guessed.push([x, y, parseInt($input.value)]);
-          $input.value = 0;
-          sudokuBoard[x][y] = 0;
-          emptyCellColor(x, y, $input);
+  if(solved === false) {
+    for (var x = 0; x < sudokuBoard.length; x++){
+      for (var y = 0; y < sudokuBoard.length; y++){
+        var $input;
+        $input = $('input' + '[row=\"' + x +'\"]' + '[column=\"' + y +'\"]')[0];
+        if($input.getAttribute('startingNumber') !== 'yes'){
+          if($input.value !== ""){
+            guessed.push([x, y, parseInt($input.value)]);
+            $input.value = 0;
+            sudokuBoard[x][y] = 0;
+            emptyCellColor(x, y, $input);
+          }
         }
       }
     }
@@ -539,30 +544,32 @@ function findUserInput(){
 
 function checkUserInputWithValid(){
   var userInput = findUserInput();
-  sudokuSolver();
-  debugger;
-  var userInputCounter, userInputRow, userInputColumn, userInputValue;
-  for (var x = 0; x < sudokuBoard.length; x++){
-    for (var y = 0; y < sudokuBoard.length; y++){
-      var $input;
-      $input = $('input' + '[row=\"' + x +'\"]' + '[column=\"' + y +'\"]')[0];
-      if($input.getAttribute('solver') === 'yes'){
-        userInputCounter = 0;
-        do{
-          userInputRow = userInput[userInputCounter][0];
-          userInputColumn = userInput[userInputCounter][1];
-          userInputValue = userInput[userInputCounter][2];
-          if(x === userInputRow && y === userInputColumn){
-            if(userInputValue === parseInt($input.value)){
-              $input.removeAttribute('solver');
-            } else {
-              $input.removeAttribute('solver')
-              $input.setAttribute('corrected','yes');
+  if(solved === false) {
+    sudokuSolver();
+    debugger;
+    var userInputCounter, userInputRow, userInputColumn, userInputValue;
+    for (var x = 0; x < sudokuBoard.length; x++){
+      for (var y = 0; y < sudokuBoard.length; y++){
+        var $input;
+        $input = $('input' + '[row=\"' + x +'\"]' + '[column=\"' + y +'\"]')[0];
+        if($input.getAttribute('solver') === 'yes'){
+          userInputCounter = 0;
+          do{
+            userInputRow = userInput[userInputCounter][0];
+            userInputColumn = userInput[userInputCounter][1];
+            userInputValue = userInput[userInputCounter][2];
+            if(x === userInputRow && y === userInputColumn){
+              if(userInputValue === parseInt($input.value)){
+                $input.removeAttribute('solver');
+              } else {
+                $input.removeAttribute('solver')
+                $input.setAttribute('corrected','yes');
+              }
             }
+            userInputCounter++;
           }
-          userInputCounter++;
+          while(userInputCounter !== userInput.length);
         }
-        while(userInputCounter !== userInput.length);
       }
     }
   }
