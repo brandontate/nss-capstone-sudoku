@@ -54,6 +54,7 @@ function createSmallSudokuBoard(){
     for(var j = 0; j < size; j++){
       var td = tr.insertCell();
       var tdInput = td.appendChild(document.createElement('input'));
+      tdInput.type = "text";
       tdInput.setAttribute('onkeyup','smallMatrixInsert(this);');
       tdInput.setAttribute('onkeydown','deleteDetector(this);');
       tdInput.setAttribute('maxlength','1');

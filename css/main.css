@@ -59,18 +59,18 @@ table td input {
   list-style-type: none;
 }
 
-input {
+input[type="text"] {
   border: none;
+}
+
+input {
   margin: 0px;
   padding: 0px;
   font-weight: bold;
   font-size: 150%;
   background-color: transparent;
 }
-
-input[type="button"]{
-  border: 1px solid black;
-  box-shadow: inset 0 0 2px #000000;
+input[type="button"] {
   background-color: #F8F8F8;
 }
 
