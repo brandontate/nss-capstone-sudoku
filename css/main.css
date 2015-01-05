@@ -100,3 +100,7 @@ input[solver='yes'] {
   color: blue;
   box-shadow: none;
 }
+
+input[disabled='disabled'] {
+  opacity: 1;
+}
