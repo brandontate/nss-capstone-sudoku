@@ -353,7 +353,7 @@ function findLeastAmountOfValid(){
 
 
 
-function sudokuSolver2(){
+function sudokuSolver(){
   var cellsToTry = emptyAreas();
   var row, column, $input, subsection, validNumbers, previousValueIndex, previousValue, availableNumbersClone, previousValueArrayIndex;
   var tries = 0;
@@ -527,7 +527,7 @@ function insertBoard(startingNumbers){
   var emptyPositions = emptyAreas();
   var counter = 0;
   var size = parseInt($('#board-size').val());
-  sudokuSolver2();
+  sudokuSolver();
   testAnswers = sudokuBoard;
   deleteSudokuBoard();
   do{
@@ -565,7 +565,7 @@ function puzzleComplete(){
 function testForUniqueBoard(solvedBoard){
   var counter = 0;
   do{
-    sudokuSolver2();
+    sudokuSolver();
     if((sudokuBoard.join('') == solvedBoard.join('')) === false){
       deleteSudokuBoard();
       return false;
@@ -573,7 +573,7 @@ function testForUniqueBoard(solvedBoard){
     clearBoard();
     counter++;
   }
-  while(counter < 7);
+  while(counter < 4);
   clearBoard();
   return true;
 }
@@ -611,7 +611,7 @@ function checkUserInputWithValid(){
   debugger;
   var userInput = findUserInput();
   if(solved === false) {
-    sudokuSolver2();
+    sudokuSolver();
     var userInputCounter, userInputRow, userInputColumn, userInputValue;
     for (var x = 0; x < sudokuBoard.length; x++){
       for (var y = 0; y < sudokuBoard.length; y++){
