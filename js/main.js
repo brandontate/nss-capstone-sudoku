@@ -2,11 +2,26 @@ var availableNumbers = [];
 var sudokuBoard = [];
 var win = new Audio('audio/Victory.mp3');
 var guesses, solved;
+
 // var myDataRef = new Firebase('https://nss-sudoku.firebaseio.com/puzzle');
 
 function deleteSudokuBoard(){
   $('table').remove();
   createSudokuBoard();
+}
+function clearBoard(){
+  var row, column, $input;
+  var cellsToDelete = $('#sudoku-game-board input');
+  for (var i = 0; i < cellsToDelete.length; i++){
+    if(cellsToDelete[i].getAttribute("startingnumber") === null){
+      row = parseInt(cellsToDelete[i].getAttribute("row"));
+      column = parseInt(cellsToDelete[i].getAttribute("column"));
+      $input = cellsToDelete[i];
+      deleteInput(row, column, $input);
+      $input.removeAttribute('solver');
+      $input.removeAttribute('corrected');
+    }
+  }
 }
 
 function sudokuBoardSize(size) {
@@ -177,17 +192,6 @@ function deleteDetector(input) {
     $(input).removeClass("false-input");
   }
 }
-function findEmptyValues(){
-  var emptyCells = 0;
-  for(var i = 0; i < 4; i++){
-    for(var j = 0; j < 4; j++){
-      if(sudokuBoard[i][j] === 0 || sudokuBoard[i][j] === "") {
-        emptyCells++;
-      }
-    }
-  }
-  return emptyCells;
-}
 
 var validateRow = function (row, column, value){
   var rowArray = $('input' + '[row=\"' + row +'\"]');
@@ -296,7 +300,6 @@ function solveCurrentCell(row, column, options){
         options.splice(options.indexOf(randomValue), 1);
         return false;
       }
-  $input.setAttribute('solver','yes');
   return true;
 }
 
@@ -342,95 +345,123 @@ function findLeastAmountOfValid(){
     $input = $('input' + '[row=\"' + row +'\"]' + '[column=\"' + column +'\"]')[0]
     subsection = parseInt($input.getAttribute('subsection'));
     arrayofValidEntries = checkPossibleValues(row, column, subsection, numbersToPickFrom);
-    areasToTryFirst.push({ "row": row, "column": column, "valid": arrayofValidEntries });
+    areasToTryFirst.push({ "row": row, "column": column, "subsection": subsection, "valid": arrayofValidEntries });
   }
   return areasToTryFirst;
 }
 
-function sudokuSolver(){
-  var position, row, column, $input, quadrant, arrayofValidEntries, validOptions,
-  numbersToPickFrom, cellsToTry, previousRow, previousColumn, previousQuadrant;
-  var areasToTryFirst = [];
-  var previousCell = [];
-  var previousValue = 0;
-  var clearBoard = 0;
-  do {
-    cellsToTry = 0;
-    cellsToTry = findLeastAmountOfValid();
-    currentCell = findShortValid(cellsToTry);
-    if(currentCell.valid.length !== 0){
-      row = currentCell.row;
-      column = currentCell.column;
-      validOptions = currentCell.valid;
-      if(previousValue !== 0){
-        validOptions.splice(validOptions.indexOf(previousValue), 1);
-      }
-      if(validOptions.length !== 0){
-        solveCurrentCell(row, column, validOptions);
-        previousCell.push(currentCell);
-      } else {
+
+
+
+function sudokuSolver2(){
+  var cellsToTry = emptyAreas();
+  var row, column, $input, subsection, validNumbers, previousValueIndex, previousValue, availableNumbersClone, previousValueArrayIndex;
+  var tries = 0;
+  var previousGuesses = [];
+  //solved = true;
+  for(var i = 0; i < cellsToTry.length; i++){
+    row = cellsToTry[i][0];
+    column = cellsToTry[i][1];
+    $input = $('input' + '[row=\"' + row +'\"]' + '[column=\"' + column +'\"]')[0];
+    subsection = parseInt($input.getAttribute('subsection'));
+    availableNumbersClone = shuffle(availableNumbers.slice(0));
+    if($input.value !== ""){
+      previousValue = parseInt($input.value);
+      if(checkForPreviousGuesses(previousGuesses, row, column, previousValue) === true){
+        previousGuesses[i].guesses.push(previousValue);
+        deleteInput(row, column, $input);
+        validNumbers = checkPossibleValues(row, column, subsection, availableNumbersClone);
+        previousValueIndex = validNumbers.indexOf(previousValue);
+        previousValueArrayIndex = 0;
         do {
-          previousRow = previousCell[previousCell.length-1].row;
-          previousColumn = previousCell[previousCell.length-1].column;
-          $input = $('input' + '[row=\"' + previousRow +'\"]' + '[column=\"' + previousColumn +'\"]')[0];
-          previousQuadrant = $input.getAttribute('quadrant');
-          previousValue = parseInt($input.value);
-          $input.value = "";
-          sudokuBoard[previousRow][previousColumn] = 0;
-          emptyCellColor(previousRow, previousColumn, $input);
-          previousCell.splice((previousCell.length - 1), 1);
-          clearBoard++;
-          if (clearBoard === 15) {
-            do {
-              var numberOfSolved = $('input[solver=yes]');
-              numberOfSolved[numberOfSolved.length - 1].value = "";
-              var rowToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('row');
-              var columnToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('column');
-              sudokuBoard[rowToDelete][columnToDelete] = 0;
-              numberOfSolved[numberOfSolved.length - 1].removeAttribute('solver');
-              emptyCellColor(rowToDelete, columnToDelete, numberOfSolved[numberOfSolved.length - 1]);
-              numberOfSolved.splice((numberOfSolved.length - 1),1);
-            }
-            while (numberOfSolved.length !== 0);
-            clearBoard = 0;
-            previousValue = 0;
-            previousCell = [];
+          if (validNumbers.indexOf(previousGuesses[i].guesses[previousValueArrayIndex]) !== -1){
+            validNumbers.splice(validNumbers.indexOf(previousGuesses[i].guesses[previousValueArrayIndex]), 1);
           }
-        } while (currentCell.valid.length !== 0);
+          previousValueArrayIndex++;
+        }
+        while(previousValueArrayIndex !== previousGuesses[i].guesses.length)
+      } else {
+        deleteInput(row, column, $input);
+        validNumbers = checkPossibleValues(row, column, subsection, availableNumbersClone);
+        previousValueIndex = validNumbers.indexOf(previousValue);
       }
     } else {
-      do {
-        previousRow = previousCell[previousCell.length-1].row;
-        previousColumn = previousCell[previousCell.length-1].column;
-        $input = $('input' + '[row=\"' + previousRow +'\"]' + '[column=\"' + previousColumn +'\"]')[0];
-        previousQuadrant = $input.getAttribute('quadrant');
-        previousValue = parseInt($input.value);
-        $input.value = "";
-        sudokuBoard[previousRow][previousColumn] = 0;
-        emptyCellColor(previousRow, previousColumn, $input);
-        previousCell.splice((previousCell.length - 1), 1);
-        clearBoard++;
-        if (clearBoard === 15) {
-          do {
-            var numberOfSolved = $('input[solver=yes]');
-            numberOfSolved[numberOfSolved.length - 1].value = "";
-            var rowToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('row');
-            var columnToDelete = numberOfSolved[numberOfSolved.length - 1].getAttribute('column');
-            sudokuBoard[rowToDelete][columnToDelete] = 0;
-            numberOfSolved[numberOfSolved.length - 1].removeAttribute('solver');
-            emptyCellColor(rowToDelete, columnToDelete, numberOfSolved[numberOfSolved.length - 1]);
-            numberOfSolved.splice((numberOfSolved.length - 1),1);
-          }
-          while (numberOfSolved.length !== 0);
-          clearBoard = 0;
-          previousValue = 0;
-          previousCell = [];
-        }
-      }
-      while (currentCell.valid.length !== 0);
+      validNumbers = checkPossibleValues(row, column, subsection, availableNumbersClone);
+      previousValueIndex = false;
     }
-  } while (emptyAreas().length !== 0);
-  solved = true;
+
+    if(solverCheckValidInputs(row, column, subsection, $input, validNumbers, previousValueIndex) === false){
+      deleteInput(row, column, $input);
+      if(i > 1) {
+        i = i - 2;
+      } else {
+        i = -1;
+      }
+    } else {
+      previousValue = parseInt($input.value);
+      previousGuesses.push({ "row": row, "column": column, "guesses": [previousValue], "tries": tries });
+      previousGuesses[i].tries = previousGuesses[i].tries + 1;
+      if(previousGuesses[i].tries > 2){
+        clearOutGuesses(previousGuesses, i);
+      }
+    }
+    $input.setAttribute('solver','yes');
+  }
+}
+
+function clearOutGuesses(array, index){
+  for(index = index + 1; index < array.length; index++){
+    array[index].guesses = [];
+  }
+  return array;
+}
+
+function checkForPreviousGuesses(array, row, column, previousValue){
+  for(var x = 0; x < array.length; x++){
+    if(row === array[x].row && column === array[x].column){
+      return true;
+    }
+  }
+  return false;
+}
+
+function deleteInput(row, column, input){
+  input.value = "";
+  sudokuBoard[row][column] = 0;
+  matrixInsert(input);
+  emptyCellColor(row, column, input);
+}
+
+
+
+function solverCheckValidInputs(row, column, subsection, input, array, index){
+  if(index !== false) {
+    array.splice(index, 1);
+    index = 0;
+  } else {
+    index = 0;
+  }
+    for (index; index < array.length; index++){
+      value = array[index];
+      if(validateSudoku(row, column, value, subsection) === true){
+        input.value = value;
+        matrixInsert(input);
+        return;
+      }
+    }
+    return false;
+}
+
+function shuffle(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex ;
+  while (0 !== currentIndex) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+  return array;
 }
 
 function findShortValid(array){
@@ -466,11 +497,11 @@ function checkDifficulty(){
       break;
 
     case "medium":
-      startingNumbers = 33;
+      startingNumbers = 35;
       break;
 
     case "hard":
-      startingNumbers = 29;
+      startingNumbers = 31;
       break;
     }
   } else if (size === 4){
@@ -492,33 +523,67 @@ function checkDifficulty(){
 }
 
 function insertBoard(startingNumbers){
-  var row, column, value, $input, insertValue, testAnswers, index;
+  var row, column, value, $input, insertValue, testAnswers, index, uniqueCounter, answeredBoard;
   var emptyPositions = emptyAreas();
   var counter = 0;
   var size = parseInt($('#board-size').val());
-  sudokuSolver();
+  sudokuSolver2();
   testAnswers = sudokuBoard;
   deleteSudokuBoard();
   do{
-    index = Math.floor(Math.random() * (emptyPositions.length-1));
-    row = emptyPositions[index][0];
-    column = emptyPositions[index][1];
-     $input = $('input' + '[row=\"' + row +'\"]' + '[column=\"' + column +'\"]')[0];
-    if($input.value === ""){
-      $input.value = testAnswers[row][column];
-      matrixInsert($input);
-      $input.setAttribute('disabled','disabled');
-      $input.setAttribute('startingNumber','yes');
-      counter++;
+    counter = 0;
+    do{
+      emptyPositions = shuffle(emptyPositions);
+      index = Math.floor(Math.random() * (emptyPositions.length-1));
+      row = emptyPositions[index][0];
+      column = emptyPositions[index][1];
+       $input = $('input' + '[row=\"' + row +'\"]' + '[column=\"' + column +'\"]')[0];
+      if($input.value === ""){
+        $input.value = testAnswers[row][column];
+        matrixInsert($input);
+        $input.setAttribute('disabled','disabled');
+        $input.setAttribute('startingNumber','yes');
+        counter++;
+      }
     }
+    while(counter !== startingNumbers);
+    startingNumbers++;
   }
-  while(counter !== startingNumbers);
-  testAnswers
+  while(testForUniqueBoard(testAnswers) !== true);
+  testAnswers = [];
+  solved === false;
+}
+function loading(){
+  $('#loading-board')[0].innerHTML = "Loading Game. This could take some time.";
+}
+
+function puzzleComplete(){
+  $('#loading-board')[0].innerHTML = "";
+}
+
+
+function testForUniqueBoard(solvedBoard){
+  var counter = 0;
+  do{
+    sudokuSolver2();
+    if((sudokuBoard.join('') == solvedBoard.join('')) === false){
+      deleteSudokuBoard();
+      return false;
+    }
+    clearBoard();
+    counter++;
+  }
+  while(counter < 7);
+  clearBoard();
+  return true;
 }
 
 function createNewGame(){
   deleteSudokuBoard();
+  loading();
+  debugger;
   insertBoard(checkDifficulty());
+  puzzleComplete();
 }
 
 function findUserInput(){
@@ -543,10 +608,10 @@ function findUserInput(){
 }
 
 function checkUserInputWithValid(){
+  debugger;
   var userInput = findUserInput();
   if(solved === false) {
-    sudokuSolver();
-    debugger;
+    sudokuSolver2();
     var userInputCounter, userInputRow, userInputColumn, userInputValue;
     for (var x = 0; x < sudokuBoard.length; x++){
       for (var y = 0; y < sudokuBoard.length; y++){
@@ -577,5 +642,5 @@ function checkUserInputWithValid(){
 
 $(document).ready(function(){
   createSudokuBoard();
-  insertBoard(checkDifficulty());
+  createNewGame();
 });
